@@ -14,7 +14,7 @@ import os
 import subprocess
 from time import sleep
 from io import StringIO
-
+from screeninfo import get_monitors
 
 
 class G:
@@ -351,12 +351,12 @@ def pveauth(username, passwd, totp):
 				connected = False
 	return connected, authenticated, err
 
-def loginwindow():
+def loginwindow(x_loc, y_loc):
 	layout = setmainlayout()
 	if G.icon:
-		window = sg.Window(G.title, layout, return_keyboard_events=True, resizable=False, no_titlebar=G.kiosk, icon=G.icon)
+		window = sg.Window(G.title, layout, return_keyboard_events=True, resizable=False, no_titlebar=G.kiosk, icon=G.icon, location=(x_loc, y_loc))
 	else:
-		window = sg.Window(G.title, layout, return_keyboard_events=True, resizable=False, no_titlebar=G.kiosk)
+		window = sg.Window(G.title, layout, return_keyboard_events=True, resizable=False, no_titlebar=G.kiosk,  location=(x_loc, y_loc))
 	while True:
 		event, values = window.read()
 		if event == 'Cancel' or event == sg.WIN_CLOSED:
@@ -382,16 +382,16 @@ def loginwindow():
 					return True
 				#break
 
-def showvms():
+def showvms(x_loc, y_loc):
 	vms = getvms()
 	if len(vms) < 1:
 		win_popup_button('No desktop instances found, please consult with your system administrator', 'OK')
 		return False
 	layout = setvmlayout(vms)
 	if G.icon:
-		window = sg.Window(G.title, layout, return_keyboard_events=True, resizable=False, no_titlebar=G.kiosk, icon=G.icon)
+		window = sg.Window(G.title, layout, return_keyboard_events=True, resizable=False, no_titlebar=G.kiosk, icon=G.icon, location=(x_loc, y_loc))
 	else:
-		window = sg.Window(G.title, layout, return_keyboard_events=True, resizable=False, no_titlebar=G.kiosk)
+		window = sg.Window(G.title, layout, return_keyboard_events=True, resizable=False, no_titlebar=G.kiosk, location=(x_loc, y_loc))
 	while True:
 		event, values = window.read()
 		if event in ('Logout', None):
@@ -408,6 +408,10 @@ def showvms():
 			if not found:
 				win_popup_button(f'VM {vm["name"]} no longer availble, please contact your system administrator', 'OK')
 	return True
+
+def screendimension():
+	screen = get_monitors()[0]	
+	return screen.width/2.4, screen.height/2.4
 
 def main():
 	if os.name == 'nt' and gui == 'QT':
@@ -433,13 +437,14 @@ def main():
 		return False
 	sg.theme(G.theme)
 	loggedin = False
+	x_loc, y_loc = screendimension()
 	while True:
 		if not loggedin:
-			loggedin = loginwindow()
+			loggedin = loginwindow(x_loc, y_loc)
 			if not loggedin:
 				break
 			else:
-				vmstat = showvms()
+				vmstat = showvms(x_loc, y_loc)
 				if not vmstat:
 					G.proxmox = None
 					loggedin = False
